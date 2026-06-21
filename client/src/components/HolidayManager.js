@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Trash2, Edit2, Plus } from 'lucide-react';
 import './HolidayManager.css';
 
-const API_URL = 'http://localhost:5000/api';
+const { electron } = window;
 
 function HolidayManager({ holidays, departments, onHolidayChange }) {
   const [showForm, setShowForm] = useState(false);
@@ -19,16 +18,16 @@ function HolidayManager({ holidays, departments, onHolidayChange }) {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.patch(`${API_URL}/holidays/${editingId}`, formData);
+        await electron.db.updateHoliday(editingId, formData);
       } else {
-        await axios.post(`${API_URL}/holidays`, formData);
+        await electron.db.addHoliday(formData);
       }
       setFormData({ name: '', date: '', type: 'company', departments: [] });
       setEditingId(null);
       setShowForm(false);
       onHolidayChange();
     } catch (error) {
-      alert('Error al guardar día festivo');
+      alert('Error al guardar día festivo: ' + error.message);
     }
   };
 
@@ -37,16 +36,16 @@ function HolidayManager({ holidays, departments, onHolidayChange }) {
       name: holiday.name,
       date: holiday.date.split('T')[0],
       type: holiday.type,
-      departments: holiday.departments.map(d => d._id)
+      departments: holiday.departments || []
     });
-    setEditingId(holiday._id);
+    setEditingId(holiday.id);
     setShowForm(true);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este día festivo?')) {
       try {
-        await axios.delete(`${API_URL}/holidays/${id}`);
+        await electron.db.deleteHoliday(id);
         onHolidayChange();
       } catch (error) {
         alert('Error al eliminar día festivo');
@@ -70,7 +69,7 @@ function HolidayManager({ holidays, departments, onHolidayChange }) {
 
   const getDepartmentNames = (deptIds) => {
     return deptIds.map(id => {
-      const dept = departments.find(d => d._id === id);
+      const dept = departments.find(d => d.id === id);
       return dept ? dept.name : 'N/A';
     }).join(', ');
   };
@@ -129,11 +128,11 @@ function HolidayManager({ holidays, departments, onHolidayChange }) {
             <label>Departamentos Afectados:</label>
             <div className="checkbox-group">
               {departments.map((dept) => (
-                <label key={dept._id} className="checkbox-label">
+                <label key={dept.id} className="checkbox-label">
                   <input
                     type="checkbox"
-                    checked={formData.departments.includes(dept._id)}
-                    onChange={() => toggleDepartment(dept._id)}
+                    checked={formData.departments.includes(dept.id)}
+                    onChange={() => toggleDepartment(dept.id)}
                   />
                   {dept.name}
                 </label>
@@ -164,16 +163,16 @@ function HolidayManager({ holidays, departments, onHolidayChange }) {
           </thead>
           <tbody>
             {holidays.map((holiday) => (
-              <tr key={holiday._id}>
+              <tr key={holiday.id}>
                 <td>{holiday.name}</td>
                 <td>{new Date(holiday.date).toLocaleDateString('es-ES')}</td>
                 <td>{getTypeLabel(holiday.type)}</td>
-                <td>{getDepartmentNames(holiday.departments.map(d => d._id))}</td>
+                <td>{getDepartmentNames(holiday.departments || [])}</td>
                 <td>
                   <button className="btn-icon" onClick={() => handleEdit(holiday)}>
                     <Edit2 size={18} />
                   </button>
-                  <button className="btn-icon btn-danger" onClick={() => handleDelete(holiday._id)}>
+                  <button className="btn-icon btn-danger" onClick={() => handleDelete(holiday.id)}>
                     <Trash2 size={18} />
                   </button>
                 </td>

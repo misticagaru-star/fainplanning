@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Trash2, Edit2, Plus } from 'lucide-react';
 import './WorkerManager.css';
 
-const API_URL = 'http://localhost:5000/api';
+const { electron } = window;
 
 function WorkerManager({ workers, departments, onWorkerChange }) {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    department: '',
+    departmentId: '',
     position: '',
     maxHoursPerDay: 8
   });
@@ -20,16 +19,16 @@ function WorkerManager({ workers, departments, onWorkerChange }) {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.patch(`${API_URL}/workers/${editingId}`, formData);
+        await electron.db.updateWorker(editingId, formData);
       } else {
-        await axios.post(`${API_URL}/workers`, formData);
+        await electron.db.addWorker(formData);
       }
-      setFormData({ name: '', email: '', department: '', position: '', maxHoursPerDay: 8 });
+      setFormData({ name: '', email: '', departmentId: '', position: '', maxHoursPerDay: 8 });
       setEditingId(null);
       setShowForm(false);
       onWorkerChange();
     } catch (error) {
-      alert('Error al guardar operario');
+      alert('Error al guardar operario: ' + error.message);
     }
   };
 
@@ -37,18 +36,18 @@ function WorkerManager({ workers, departments, onWorkerChange }) {
     setFormData({
       name: worker.name,
       email: worker.email,
-      department: worker.department._id,
+      departmentId: worker.departmentId,
       position: worker.position,
       maxHoursPerDay: worker.maxHoursPerDay
     });
-    setEditingId(worker._id);
+    setEditingId(worker.id);
     setShowForm(true);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este operario?')) {
       try {
-        await axios.delete(`${API_URL}/workers/${id}`);
+        await electron.db.deleteWorker(id);
         onWorkerChange();
       } catch (error) {
         alert('Error al eliminar operario');
@@ -57,7 +56,7 @@ function WorkerManager({ workers, departments, onWorkerChange }) {
   };
 
   const getDepartmentName = (deptId) => {
-    const dept = departments.find(d => d._id === deptId);
+    const dept = departments.find(d => d.id === deptId);
     return dept ? dept.name : 'N/A';
   };
 
@@ -95,12 +94,12 @@ function WorkerManager({ workers, departments, onWorkerChange }) {
             <label>Departamento:</label>
             <select
               required
-              value={formData.department}
-              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              value={formData.departmentId}
+              onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
             >
               <option value="">Selecciona un departamento</option>
               {departments.map((dept) => (
-                <option key={dept._id} value={dept._id}>
+                <option key={dept.id} value={dept.id}>
                   {dept.name}
                 </option>
               ))}
@@ -129,7 +128,7 @@ function WorkerManager({ workers, departments, onWorkerChange }) {
             <button type="button" className="btn-cancel" onClick={() => {
               setShowForm(false);
               setEditingId(null);
-              setFormData({ name: '', email: '', department: '', position: '', maxHoursPerDay: 8 });
+              setFormData({ name: '', email: '', departmentId: '', position: '', maxHoursPerDay: 8 });
             }}>Cancelar</button>
           </div>
         </form>
@@ -149,17 +148,17 @@ function WorkerManager({ workers, departments, onWorkerChange }) {
           </thead>
           <tbody>
             {workers.map((worker) => (
-              <tr key={worker._id}>
+              <tr key={worker.id}>
                 <td>{worker.name}</td>
                 <td>{worker.email}</td>
-                <td>{worker.department.name}</td>
+                <td>{getDepartmentName(worker.departmentId)}</td>
                 <td>{worker.position}</td>
                 <td>{worker.maxHoursPerDay}h</td>
                 <td>
                   <button className="btn-icon" onClick={() => handleEdit(worker)}>
                     <Edit2 size={18} />
                   </button>
-                  <button className="btn-icon btn-danger" onClick={() => handleDelete(worker._id)}>
+                  <button className="btn-icon btn-danger" onClick={() => handleDelete(worker.id)}>
                     <Trash2 size={18} />
                   </button>
                 </td>

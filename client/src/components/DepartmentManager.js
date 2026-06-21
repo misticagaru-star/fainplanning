@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Trash2, Edit2, Plus } from 'lucide-react';
 import './DepartmentManager.css';
 
-const API_URL = 'http://localhost:5000/api';
+const { electron } = window;
 
 function DepartmentManager({ departments, onDepartmentChange }) {
   const [showForm, setShowForm] = useState(false);
@@ -14,29 +13,29 @@ function DepartmentManager({ departments, onDepartmentChange }) {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.patch(`${API_URL}/departments/${editingId}`, formData);
+        await electron.db.updateDepartment(editingId, formData);
       } else {
-        await axios.post(`${API_URL}/departments`, formData);
+        await electron.db.addDepartment(formData);
       }
       setFormData({ name: '', description: '', color: '#3B82F6' });
       setEditingId(null);
       setShowForm(false);
       onDepartmentChange();
     } catch (error) {
-      alert('Error al guardar departamento');
+      alert('Error al guardar departamento: ' + error.message);
     }
   };
 
   const handleEdit = (dept) => {
     setFormData(dept);
-    setEditingId(dept._id);
+    setEditingId(dept.id);
     setShowForm(true);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este departamento?')) {
       try {
-        await axios.delete(`${API_URL}/departments/${id}`);
+        await electron.db.deleteDepartment(id);
         onDepartmentChange();
       } catch (error) {
         alert('Error al eliminar departamento');
@@ -93,7 +92,7 @@ function DepartmentManager({ departments, onDepartmentChange }) {
 
       <div className="items-grid">
         {departments.map((dept) => (
-          <div key={dept._id} className="item-card">
+          <div key={dept.id} className="item-card">
             <div className="item-header">
               <div 
                 className="color-badge" 
@@ -106,7 +105,7 @@ function DepartmentManager({ departments, onDepartmentChange }) {
               <button className="btn-icon" onClick={() => handleEdit(dept)}>
                 <Edit2 size={18} />
               </button>
-              <button className="btn-icon btn-danger" onClick={() => handleDelete(dept._id)}>
+              <button className="btn-icon btn-danger" onClick={() => handleDelete(dept.id)}>
                 <Trash2 size={18} />
               </button>
             </div>

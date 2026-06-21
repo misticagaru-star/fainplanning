@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import GanttChart from './components/GanttChart';
 import DepartmentManager from './components/DepartmentManager';
 import WorkerManager from './components/WorkerManager';
@@ -8,7 +7,7 @@ import HolidayManager from './components/HolidayManager';
 import Navigation from './components/Navigation';
 import './App.css';
 
-const API_URL = 'http://localhost:5000/api';
+const { electron } = window;
 
 function App() {
   const [activeTab, setActiveTab] = useState('gantt');
@@ -16,9 +15,8 @@ function App() {
   const [workers, setWorkers] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [holidays, setHolidays] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch all data
   useEffect(() => {
     fetchAllData();
   }, []);
@@ -27,15 +25,15 @@ function App() {
     setLoading(true);
     try {
       const [depRes, workRes, taskRes, holRes] = await Promise.all([
-        axios.get(`${API_URL}/departments`),
-        axios.get(`${API_URL}/workers`),
-        axios.get(`${API_URL}/tasks`),
-        axios.get(`${API_URL}/holidays`)
+        electron.db.getDepartments(),
+        electron.db.getWorkers(),
+        electron.db.getTasks(),
+        electron.db.getHolidays()
       ]);
-      setDepartments(depRes.data);
-      setWorkers(workRes.data);
-      setTasks(taskRes.data);
-      setHolidays(holRes.data);
+      setDepartments(depRes || []);
+      setWorkers(workRes || []);
+      setTasks(taskRes || []);
+      setHolidays(holRes || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -45,8 +43,8 @@ function App() {
 
   const handleDepartmentChange = async () => {
     try {
-      const res = await axios.get(`${API_URL}/departments`);
-      setDepartments(res.data);
+      const res = await electron.db.getDepartments();
+      setDepartments(res || []);
     } catch (error) {
       console.error('Error fetching departments:', error);
     }
@@ -54,8 +52,8 @@ function App() {
 
   const handleWorkerChange = async () => {
     try {
-      const res = await axios.get(`${API_URL}/workers`);
-      setWorkers(res.data);
+      const res = await electron.db.getWorkers();
+      setWorkers(res || []);
     } catch (error) {
       console.error('Error fetching workers:', error);
     }
@@ -63,8 +61,8 @@ function App() {
 
   const handleTaskChange = async () => {
     try {
-      const res = await axios.get(`${API_URL}/tasks`);
-      setTasks(res.data);
+      const res = await electron.db.getTasks();
+      setTasks(res || []);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     }
@@ -72,8 +70,8 @@ function App() {
 
   const handleHolidayChange = async () => {
     try {
-      const res = await axios.get(`${API_URL}/holidays`);
-      setHolidays(res.data);
+      const res = await electron.db.getHolidays();
+      setHolidays(res || []);
     } catch (error) {
       console.error('Error fetching holidays:', error);
     }

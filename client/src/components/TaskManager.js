@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Trash2, Edit2, Plus } from 'lucide-react';
 import './TaskManager.css';
 
-const API_URL = 'http://localhost:5000/api';
+const { electron } = window;
 
 function TaskManager({ tasks, workers, departments, onTaskChange }) {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    worker: '',
-    department: '',
+    workerId: '',
+    departmentId: '',
     startDate: '',
     endDate: '',
     priority: 'medium',
@@ -25,15 +24,15 @@ function TaskManager({ tasks, workers, departments, onTaskChange }) {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.patch(`${API_URL}/tasks/${editingId}`, formData);
+        await electron.db.updateTask(editingId, formData);
       } else {
-        await axios.post(`${API_URL}/tasks`, formData);
+        await electron.db.addTask(formData);
       }
       setFormData({
         title: '',
         description: '',
-        worker: '',
-        department: '',
+        workerId: '',
+        departmentId: '',
         startDate: '',
         endDate: '',
         priority: 'medium',
@@ -45,7 +44,7 @@ function TaskManager({ tasks, workers, departments, onTaskChange }) {
       setShowForm(false);
       onTaskChange();
     } catch (error) {
-      alert('Error al guardar tarea');
+      alert('Error al guardar tarea: ' + error.message);
     }
   };
 
@@ -53,8 +52,8 @@ function TaskManager({ tasks, workers, departments, onTaskChange }) {
     setFormData({
       title: task.title,
       description: task.description,
-      worker: task.worker._id,
-      department: task.department._id,
+      workerId: task.workerId,
+      departmentId: task.departmentId,
       startDate: task.startDate.split('T')[0],
       endDate: task.endDate.split('T')[0],
       priority: task.priority,
@@ -62,14 +61,14 @@ function TaskManager({ tasks, workers, departments, onTaskChange }) {
       hoursPerDay: task.hoursPerDay,
       color: task.color
     });
-    setEditingId(task._id);
+    setEditingId(task.id);
     setShowForm(true);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {
       try {
-        await axios.delete(`${API_URL}/tasks/${id}`);
+        await electron.db.deleteTask(id);
         onTaskChange();
       } catch (error) {
         alert('Error al eliminar tarea');
@@ -78,12 +77,12 @@ function TaskManager({ tasks, workers, departments, onTaskChange }) {
   };
 
   const getWorkerName = (workerId) => {
-    const worker = workers.find(w => w._id === workerId);
+    const worker = workers.find(w => w.id === workerId);
     return worker ? worker.name : 'N/A';
   };
 
   const getDepartmentName = (deptId) => {
-    const dept = departments.find(d => d._id === deptId);
+    const dept = departments.find(d => d.id === deptId);
     return dept ? dept.name : 'N/A';
   };
 
@@ -138,12 +137,12 @@ function TaskManager({ tasks, workers, departments, onTaskChange }) {
             <label>Operario:</label>
             <select
               required
-              value={formData.worker}
-              onChange={(e) => setFormData({ ...formData, worker: e.target.value })}
+              value={formData.workerId}
+              onChange={(e) => setFormData({ ...formData, workerId: e.target.value })}
             >
               <option value="">Selecciona un operario</option>
               {workers.map((worker) => (
-                <option key={worker._id} value={worker._id}>
+                <option key={worker.id} value={worker.id}>
                   {worker.name}
                 </option>
               ))}
@@ -153,12 +152,12 @@ function TaskManager({ tasks, workers, departments, onTaskChange }) {
             <label>Departamento:</label>
             <select
               required
-              value={formData.department}
-              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              value={formData.departmentId}
+              onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
             >
               <option value="">Selecciona un departamento</option>
               {departments.map((dept) => (
-                <option key={dept._id} value={dept._id}>
+                <option key={dept.id} value={dept.id}>
                   {dept.name}
                 </option>
               ))}
@@ -232,8 +231,8 @@ function TaskManager({ tasks, workers, departments, onTaskChange }) {
               setFormData({
                 title: '',
                 description: '',
-                worker: '',
-                department: '',
+                workerId: '',
+                departmentId: '',
                 startDate: '',
                 endDate: '',
                 priority: 'medium',
@@ -262,10 +261,10 @@ function TaskManager({ tasks, workers, departments, onTaskChange }) {
           </thead>
           <tbody>
             {tasks.map((task) => (
-              <tr key={task._id}>
+              <tr key={task.id}>
                 <td>{task.title}</td>
-                <td>{getWorkerName(task.worker._id)}</td>
-                <td>{getDepartmentName(task.department._id)}</td>
+                <td>{getWorkerName(task.workerId)}</td>
+                <td>{getDepartmentName(task.departmentId)}</td>
                 <td>{new Date(task.startDate).toLocaleDateString('es-ES')}</td>
                 <td>{new Date(task.endDate).toLocaleDateString('es-ES')}</td>
                 <td>
@@ -282,7 +281,7 @@ function TaskManager({ tasks, workers, departments, onTaskChange }) {
                   <button className="btn-icon" onClick={() => handleEdit(task)}>
                     <Edit2 size={18} />
                   </button>
-                  <button className="btn-icon btn-danger" onClick={() => handleDelete(task._id)}>
+                  <button className="btn-icon btn-danger" onClick={() => handleDelete(task.id)}>
                     <Trash2 size={18} />
                   </button>
                 </td>

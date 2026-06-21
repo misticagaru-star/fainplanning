@@ -1,0 +1,18 @@
+.task-form {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.form-buttons-full {
+  grid-column: 1 / -1;
+}
+
+.priority-badge,
+.status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+}

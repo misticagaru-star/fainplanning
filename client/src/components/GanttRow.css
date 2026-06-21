@@ -1,0 +1,60 @@
+.gantt-row {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  min-height: 80px;
+}
+
+.gantt-row:hover {
+  background-color: #f9fafb;
+}
+
+.gantt-row-worker {
+  width: 200px;
+  padding: 1rem;
+  border-right: 2px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: white;
+  flex-shrink: 0;
+}
+
+.worker-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.worker-department {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.gantt-row-cells {
+  flex: 1;
+  display: flex;
+  position: relative;
+}
+
+.gantt-cell {
+  width: 50px;
+  flex-shrink: 0;
+  border-right: 1px solid #eee;
+  cursor: cell;
+  transition: background-color 0.2s;
+}
+
+.gantt-cell:hover {
+  background-color: #f0f4ff;
+}
+
+.gantt-cell.holiday {
+  background-color: #fecaca;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(0,0,0,.03) 10px,
+    rgba(0,0,0,.03) 20px
+  );
+}

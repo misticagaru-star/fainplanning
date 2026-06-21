@@ -1,0 +1,57 @@
+.task-block {
+  position: absolute;
+  top: 10px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  color: white;
+  cursor: move;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: box-shadow 0.2s;
+  user-select: none;
+  border: 2px solid rgba(0,0,0,0.1);
+}
+
+.task-block:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.task-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-dates {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.task-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  background: rgba(0,0,0,0.2);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.task-resize-handle:hover {
+  background: rgba(0,0,0,0.4);
+}
